@@ -31,18 +31,6 @@
 #
 ############################################################################
 
-set(POSCONTROL_DEPENDENCIES
-	launchdetection
-	npfg
-	runway_takeoff
-	SlewRate
-	tecs
-	motion_planning
-	performance_model
-	Sticks
-)
-
-
 px4_add_module(
 	MODULE modules__fw_guidance_control
 	MAIN fw_guidance_control
@@ -52,5 +40,10 @@ px4_add_module(
 		ControllerConfigurationHandler.cpp
 		ControllerConfigurationHandler.hpp
 	DEPENDS
-		${POSCONTROL_DEPENDENCIES}
+		npfg
+		SlewRate
+		tecs
+		motion_planning
+		performance_model
+		Sticks
 	)
