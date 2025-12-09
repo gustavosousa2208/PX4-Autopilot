@@ -760,7 +760,10 @@ FixedWingModeManager::control_auto_position(const float control_interval, const 
 	float throttle_min = NAN;
 	float throttle_max = NAN;
 
-	if (pos_sp_curr.gliding_enabled) {
+	if (_landed) {
+		throttle_max = _param_fw_thr_idle.get();
+
+	} else if (pos_sp_curr.gliding_enabled) {
 		/* enable gliding with this waypoint */
 		throttle_min = 0.0;
 		throttle_max = 0.0;
@@ -820,7 +823,10 @@ FixedWingModeManager::control_auto_velocity(const float control_interval, const 
 
 	_longitudinal_ctrl_sp_pub.publish(fw_longitudinal_control_sp);
 
-	if (pos_sp_curr.gliding_enabled) {
+	if (_landed) {
+		_ctrl_configuration_handler.setThrottleMax(_param_fw_thr_idle.get());
+
+	} else if (pos_sp_curr.gliding_enabled) {
 		_ctrl_configuration_handler.setThrottleMin(0.0f);
 		_ctrl_configuration_handler.setThrottleMax(0.0f);
 		_ctrl_configuration_handler.setSpeedWeight(2.0f);
@@ -914,7 +920,10 @@ FixedWingModeManager::control_auto_loiter(const float control_interval, const Ve
 
 	_longitudinal_ctrl_sp_pub.publish(fw_longitudinal_control_sp);
 
-	if (pos_sp_curr.gliding_enabled) {
+	if (_landed) {
+		_ctrl_configuration_handler.setThrottleMax(_param_fw_thr_idle.get());
+
+	} else if (pos_sp_curr.gliding_enabled) {
 		_ctrl_configuration_handler.setThrottleMin(0.0f);
 		_ctrl_configuration_handler.setThrottleMax(0.0f);
 		_ctrl_configuration_handler.setSpeedWeight(2.0f);
@@ -962,7 +971,10 @@ FixedWingModeManager::controlAutoFigureEight(const float control_interval, const
 
 	_longitudinal_ctrl_sp_pub.publish(fw_longitudinal_control_sp);
 
-	if (pos_sp_curr.gliding_enabled) {
+	if (_landed) {
+		_ctrl_configuration_handler.setThrottleMax(_param_fw_thr_idle.get());
+
+	} else if (pos_sp_curr.gliding_enabled) {
 		_ctrl_configuration_handler.setThrottleMin(0.0f);
 		_ctrl_configuration_handler.setThrottleMax(0.0f);
 		_ctrl_configuration_handler.setSpeedWeight(2.0f);
