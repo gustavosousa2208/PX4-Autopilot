@@ -102,10 +102,11 @@ class UavcanSensorBridgeBase : public IUavcanSensorBridge, public device::Device
 	const orb_id_t _orb_topic;
 	uavcan_bridge::Channel *const _channels;
 	bool _out_of_channels = false;
-
+	bool _instance0_reserved = false;
 protected:
 	static constexpr unsigned DEFAULT_MAX_CHANNELS = 4;
-	const unsigned _max_channels;
+	const unsigned _max_channels{0};
+	int _primary_node_id{-1}; ///< Preferred node ID for instance 0 assignment
 
 	UavcanSensorBridgeBase(const char *name, const orb_id_t orb_topic_sensor,
 			       const unsigned max_channels = DEFAULT_MAX_CHANNELS) :
@@ -117,6 +118,17 @@ protected:
 		set_device_bus_type(DeviceBusType_UAVCAN);
 		set_device_bus(0);
 	}
+
+	/**
+	 * Set the primary node ID to be able to set GNSS module priority.
+	 * @param node_id Node ID that should get instance 0, or -1 for auto, instance 0 will be the primary gnss source.
+	 */
+	void setPrimaryNodeId(int node_id) { _primary_node_id = node_id; }
+
+	/**
+	 * Reserve instance 0 for the primary node by pre-advertising it.
+	 */
+	void reserveInstance0();
 
 	/**
 	 * Sends one measurement into appropriate ORB topic.

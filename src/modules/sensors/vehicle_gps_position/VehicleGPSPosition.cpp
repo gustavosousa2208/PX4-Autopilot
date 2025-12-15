@@ -95,7 +95,10 @@ void VehicleGPSPosition::ParametersUpdate(bool force)
 		_gps_blending.setBlendingUseHPosAccuracy(_param_sens_gps_mask.get() & BLEND_MASK_USE_HPOS_ACC);
 		_gps_blending.setBlendingUseVPosAccuracy(_param_sens_gps_mask.get() & BLEND_MASK_USE_VPOS_ACC);
 		_gps_blending.setBlendingTimeConstant(_param_sens_gps_tau.get());
-		_gps_blending.setPrimaryInstance(_param_sens_gps_prime.get());
+
+		int32_t primary_param = _param_sens_gps_prime.get();
+		int primary_instance = (primary_param >= 2) ? 0 : primary_param;
+		_gps_blending.setPrimaryInstance(primary_instance);
 	}
 }
 

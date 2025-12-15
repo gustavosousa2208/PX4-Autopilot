@@ -154,4 +154,6 @@ private:
 	hrt_abstime _last_rate_measurement{0};
 	float _rtcm_injection_rate{0.f}; ///< RTCM message injection rate
 	unsigned _rtcm_injection_rate_message_count{0}; ///< number of RTCM messages since last rate calculation
+
+	int32_t _primary_gps_node_id{-1}; ///< Preferred UAVCAN GPS node ID from SENS_GPS_PRIME (>= 2)
 };

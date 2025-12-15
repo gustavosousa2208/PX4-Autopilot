@@ -129,6 +129,16 @@ UavcanGnssBridge::init()
 		_moving_baseline_data_pub_perf = perf_alloc(PC_INTERVAL, "uavcan: gnss: moving baseline data rtcm stream pub");
 	}
 
+	int32_t sens_gps_prime = 0;
+	param_get(param_find("SENS_GPS_PRIME"), &sens_gps_prime);
+
+	if (sens_gps_prime >= 2) {
+		_primary_gps_node_id = sens_gps_prime;
+		setPrimaryNodeId(_primary_gps_node_id);
+		reserveInstance0();
+		PX4_INFO("Set the module with node %" PRId32 " as primary GNSS source", _primary_gps_node_id);
+	}
+
 	return res;
 }
 

@@ -253,6 +253,28 @@ UavcanSensorBridgeBase::~UavcanSensorBridgeBase()
 }
 
 void
+UavcanSensorBridgeBase::reserveInstance0()
+{
+	if (_primary_node_id <= 0 || _instance0_reserved) {
+		return;
+	}
+
+	// Pre-advertise instance 0 with a placeholder to reserve it for the primary GNSS Module
+	int instance = 0;
+	_channels[0].orb_advert = orb_advertise_multi(_orb_topic, nullptr, &instance);
+
+	if (_channels[0].orb_advert != nullptr && instance == 0) {
+		_channels[0].instance = 0;
+		_channels[0].node_id = -1;
+		_instance0_reserved = true;
+
+	} else {
+		PX4_WARN("Failed to reserve instance 0 for node %d (got instance %d). Check if serial GPS is enabled.",
+			 _primary_node_id, instance);
+	}
+}
+
+void
 UavcanSensorBridgeBase::publish(const int node_id, const void *report)
 {
 	assert(report != nullptr);
@@ -267,6 +289,13 @@ UavcanSensorBridgeBase::publish(const int node_id, const void *report)
 		}
 	}
 
+	// Check if this is the primary node claiming the reserved instance 0
+	if (channel == nullptr && _instance0_reserved && _primary_node_id > 0 && node_id == _primary_node_id) {
+		// Primary node is claiming the reserved slot
+		channel = &_channels[0];
+		channel->node_id = node_id;
+	}
+
 	// No such channel - try to create one
 	if (channel == nullptr) {
 		if (_out_of_channels) {
@@ -275,29 +304,49 @@ UavcanSensorBridgeBase::publish(const int node_id, const void *report)
 
 		DEVICE_LOG("adding channel for topic %s node %d...", _orb_topic->o_name, node_id);
 
+		unsigned target_channel_idx = _max_channels;
+
+		// if we set a primary GNSS module, we assign it to instance 0
+		if (_primary_node_id > 0 && node_id == _primary_node_id) {
+			if (_channels[0].node_id < 0) {
+				target_channel_idx = 0;
+				DEVICE_LOG("assigning primary node %d to instance 0", node_id);
+			}
+		}
+
 		// Search for the first free channel
-		for (unsigned i = 0; i < _max_channels; i++) {
-			if (_channels[i].node_id < 0) {
-				channel = _channels + i;
-				break;
+		if (target_channel_idx >= _max_channels) {
+			// If a primary node is configured, reserve channel 0 for it
+			unsigned start_channel = (_primary_node_id > 0) ? 1 : 0;
+
+			for (unsigned i = start_channel; i < _max_channels; i++) {
+				if (_channels[i].node_id < 0) {
+					target_channel_idx = i;
+					break;
+				}
 			}
 		}
 
 		// No free channels left
-		if (channel == nullptr) {
+		if (target_channel_idx >= _max_channels) {
 			_out_of_channels = true;
 			DEVICE_LOG("out of channels");
 			return;
 		}
 
+		channel = &_channels[target_channel_idx];
+
 		// update device id as we now know our device node_id
 		_device_id.devid_s.address = static_cast<uint8_t>(node_id);
 		_device_id.devid_s.bus_type = DeviceBusType::DeviceBusType_UAVCAN;
 
+		// Pre-set the instance to our target channel index to claim that specific instance
+		channel->instance = target_channel_idx;
+		channel->node_id = node_id;
+
 		// Publish to the appropriate topic, abort on failure
 		channel->orb_advert = orb_advertise_multi(_orb_topic, report, &channel->instance);
 
-		channel->node_id = node_id;
 		DEVICE_LOG("node %d instance %d ok", channel->node_id, channel->instance);
 
 		if (channel->orb_advert == nullptr) {
