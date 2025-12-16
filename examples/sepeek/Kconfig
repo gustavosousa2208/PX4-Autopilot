@@ -1,0 +1,5 @@
+menuconfig MODULES_SEPEEK
+	bool "sepeek"
+	default n
+	---help---
+		Enable support for sepeek
