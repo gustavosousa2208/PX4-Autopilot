@@ -180,26 +180,32 @@ jobs:
           if-no-files-found: warn
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: arpac-${{ needs.check-upstream.outputs.new_version }}
-          name: ARPAC Drone Firmware ${{ needs.check-upstream.outputs.new_version }}
-          body: |
-            ARPAC Drone firmware based on PX4 ${{ needs.check-upstream.outputs.new_version }}
-
-            ## Changes from upstream PX4
-            - Custom IMU configuration (ICM45686, IIM42653, ICM42670P)
-            - MS5837 barometer support
-            - Crypto/heater support
-            - Custom debug modules (regpeek, sepeek)
-
-            ## Build artifacts
-            - `arpac_arpac-drone_default.px4` - Main firmware
-            - `arpac_arpac-drone_cryptotest.px4` - Crypto test firmware
-          files: |
-            build/arpac_arpac-drone_default/*.px4
-            build/arpac_arpac-drone_cryptotest/*.px4
-          draft: false
-          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PX4_VERSION: ${{ needs.check-upstream.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create release notes
+          cat > /tmp/release_notes.md << 'EOF'
+          ARPAC Drone firmware based on PX4 ${{ needs.check-upstream.outputs.new_version }}
+
+          ## Changes from upstream PX4
+          - Custom IMU configuration (ICM45686, IIM42653, ICM42670P)
+          - MS5837 barometer support
+          - Crypto/heater support
+          - Custom debug modules (regpeek, sepeek)
+
+          ## Build artifacts
+          - `arpac_arpac-drone_default.px4` - Main firmware
+          - `arpac_arpac-drone_cryptotest.px4` - Crypto test firmware
+          EOF
+
+          # Collect firmware files
+          mkdir -p /tmp/release_files
+          cp build/arpac_arpac-drone_default/*.px4 /tmp/release_files/ 2>/dev/null || true
+          cp build/arpac_arpac-drone_cryptotest/*.px4 /tmp/release_files/ 2>/dev/null || true
+
+          # Create release using GitHub CLI (pre-installed on runners)
+          gh release create "arpac-${PX4_VERSION}" \
+            --title "ARPAC Drone Firmware ${PX4_VERSION}" \
+            --notes-file /tmp/release_notes.md \
+            /tmp/release_files/*.px4 || echo "Release creation failed or already exists"
