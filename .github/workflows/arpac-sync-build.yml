@@ -144,7 +144,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install kconfiglib jinja2 empy jsonschema pyros-genmsg packaging toml numpy future
+          pip3 install kconfiglib jinja2 "empy==3.3.4" jsonschema pyros-genmsg packaging toml numpy future pyyaml cerberus
 
       - name: Build ARPAC board (default)
         run: |
