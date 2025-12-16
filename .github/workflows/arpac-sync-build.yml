@@ -151,12 +151,6 @@ jobs:
           export PATH="/opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin:$PATH"
           make arpac_arpac-drone_default
 
-      - name: Build ARPAC board (cryptotest)
-        run: |
-          export PATH="/opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin:$PATH"
-          make arpac_arpac-drone_cryptotest
-        continue-on-error: true
-
       - name: Push ARPAC branch
         env:
           PX4_VERSION: ${{ needs.check-upstream.outputs.new_version }}
@@ -176,7 +170,6 @@ jobs:
           name: arpac-firmware-${{ needs.check-upstream.outputs.new_version }}
           path: |
             build/arpac_arpac-drone_default/*.px4
-            build/arpac_arpac-drone_cryptotest/*.px4
           if-no-files-found: warn
 
       - name: Create Release
@@ -191,18 +184,16 @@ jobs:
           ## Changes from upstream PX4
           - Custom IMU configuration (ICM45686, IIM42653, ICM42670P)
           - MS5837 barometer support
-          - Crypto/heater support
+          - Heater support
           - Custom debug modules (regpeek, sepeek)
 
           ## Build artifacts
           - `arpac_arpac-drone_default.px4` - Main firmware
-          - `arpac_arpac-drone_cryptotest.px4` - Crypto test firmware
           EOF
 
           # Collect firmware files
           mkdir -p /tmp/release_files
           cp build/arpac_arpac-drone_default/*.px4 /tmp/release_files/ 2>/dev/null || true
-          cp build/arpac_arpac-drone_cryptotest/*.px4 /tmp/release_files/ 2>/dev/null || true
 
           # Create release using GitHub CLI (pre-installed on runners)
           gh release create "arpac-${PX4_VERSION}" \
