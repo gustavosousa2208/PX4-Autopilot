@@ -1,0 +1,5 @@
+menuconfig MODULES_REGPEEK
+	bool "regpeek"
+	default n
+	---help---
+		Enable support for regpeek
